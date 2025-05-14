@@ -32,30 +32,56 @@ struct ContentView: View {
                 }
             } else {
                 // MARK: Start screen
-                VStack(spacing: 24) {
-                    Spacer()
-                    Image(systemName: "pawprint.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(.blue)
-                    Text("Dogstagram")
-                        .font(.largeTitle)
-                        .bold()
-                    Button(action: {
-                        isCameraActive = true
-                    }) {
-                        Text("Start Camera")
-                            .font(.title2)
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 12)
-                            .background(Color.blue)
+                ZStack {
+                    // Gradient background
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.blue, Color.purple]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .ignoresSafeArea()
+
+                    VStack(spacing: 24) {
+                        Spacer()
+
+                        // App icon
+                        Image("Homepage")
+                            .renderingMode(.original)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 120, height: 120)
+                            .shadow(radius: 10)
+
+                        // Title
+                        Text("Dogstagram")
+                            .font(.system(size: 48, weight: .heavy, design: .rounded))
                             .foregroundColor(.white)
-                            .cornerRadius(8)
+                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+
+                        // Subtitle
+                        Text("See the world through your dog's eyes")
+                            .font(.headline)
+                            .foregroundColor(.white.opacity(0.8))
+
+                        // Start button
+                        Button(action: {
+                            isCameraActive = true
+                        }) {
+                            Text("Fetch the View!")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.white.opacity(0.3))
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
+                        }
+                        .padding(.horizontal, 40)
+
+                        Spacer()
                     }
-                    Spacer()
                 }
-                .padding()
             }
         }
     }
