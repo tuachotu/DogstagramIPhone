@@ -83,19 +83,21 @@ struct ContentView: View {
                         .frame(maxHeight: .infinity)
 
                         VStack(spacing: 20) {
-                            Button("Save Dogified") {
+                            Button(action: {
                                 UIImageWriteToSavedPhotosAlbum(filtered, nil, nil, nil)
                                 showSaveOptions = false
                                 showCaptureSuccess = true
+                            }) {
+                                Text("Save Dogified")
+                                    .frame(maxWidth: .infinity)
                             }
                             .font(.headline)
                             .padding()
-                            .frame(maxWidth: .infinity)
                             .background(Color.white.opacity(0.9))
                             .cornerRadius(10)
                             .padding(.horizontal)
 
-                            Button("Save Comparison") {
+                            Button(action: {
                                 let size = CGSize(width: original.size.width + filtered.size.width,
                                                   height: max(original.size.height, filtered.size.height))
                                 UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
@@ -109,16 +111,18 @@ struct ContentView: View {
                                 }
                                 showSaveOptions = false
                                 showCaptureSuccess = true
+                            }) {
+                                Text("Save Comparison")
+                                    .frame(maxWidth: .infinity)
                             }
                             .font(.headline)
                             .padding()
-                            .frame(maxWidth: .infinity)
                             .background(Color.white.opacity(0.9))
                             .cornerRadius(10)
                             .padding(.horizontal)
 
                             // Share Comparison button
-                            Button("Share Comparison") {
+                            Button(action: {
                                 let size = CGSize(width: original.size.width + filtered.size.width,
                                                   height: max(original.size.height, filtered.size.height))
                                 UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
@@ -130,21 +134,25 @@ struct ContentView: View {
                                 if let image = finalImage {
                                     shareImage = image
                                 }
+                            }) {
+                                Text("Share Comparison")
+                                    .frame(maxWidth: .infinity)
                             }
                             .font(.headline)
                             .padding()
-                            .frame(maxWidth: .infinity)
                             .background(Color.white.opacity(0.9))
                             .cornerRadius(10)
                             .padding(.horizontal)
 
-                            Button("Home") {
+                            Button(action: {
                                 mode = .home
                                 showSaveOptions = false
+                            }) {
+                                Text("Home")
+                                    .frame(maxWidth: .infinity)
                             }
                             .font(.headline)
                             .padding()
-                            .frame(maxWidth: .infinity)
                             .background(Color.white.opacity(0.9))
                             .cornerRadius(10)
                             .padding(.horizontal)
@@ -164,15 +172,15 @@ struct ContentView: View {
                         Spacer()
                         Button(action: { captureRequested = true }) {
                             Text("Capture Pawtrait")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .padding()
                                 .frame(maxWidth: .infinity)
-                                .background(Color.white.opacity(0.8))
-                                .foregroundColor(.blue)
-                                .cornerRadius(16)
-                                .padding(.horizontal, 40)
                         }
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .padding()
+                        .background(Color.white.opacity(0.8))
+                        .foregroundColor(.blue)
+                        .cornerRadius(16)
+                        .padding(.horizontal, 40)
                         .padding(.bottom, 50)
                     }
                     if showCaptureSuccess {
@@ -196,11 +204,14 @@ struct ContentView: View {
                     VStack {
                         HStack {
                             Spacer()
-                            Button("Back") { mode = .home }
-                                .padding()
-                                .background(Color.white.opacity(0.7))
-                                .cornerRadius(8)
-                                .foregroundColor(.blue)
+                            Button(action: { mode = .home }) {
+                                Text("Back")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .padding()
+                            .background(Color.white.opacity(0.7))
+                            .cornerRadius(8)
+                            .foregroundColor(.blue)
                         }
                         Spacer()
                     }
@@ -253,15 +264,70 @@ struct ContentView: View {
                                     .cornerRadius(10)
                             }
                         }
-                        Button("Save Dog-ified Photo") {
-                            UIImageWriteToSavedPhotosAlbum(filteredImage, nil, nil, nil)
-                            showSaveSuccess = true
+                        VStack(spacing: 20) {
+                            Button(action: {
+                                // No conditional needed since filteredImage is already non-optional here
+                                UIImageWriteToSavedPhotosAlbum(filteredImage, nil, nil, nil)
+                                showSaveSuccess = true
+                            }) {
+                                Text("Save Dogified")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .font(.headline)
+                            .padding()
+                            .background(Color.white.opacity(0.9))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+
+                            Button(action: {
+                                // Compose and save comparison image
+                                let original = selectedImage
+                                let size = CGSize(width: original.size.width + filteredImage.size.width,
+                                                  height: max(original.size.height, filteredImage.size.height))
+                                UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+                                original.draw(in: CGRect(origin: .zero, size: original.size))
+                                filteredImage.draw(in: CGRect(origin: CGPoint(x: original.size.width, y: 0),
+                                                             size: filteredImage.size))
+                                let finalImage = UIGraphicsGetImageFromCurrentImageContext()
+                                UIGraphicsEndImageContext()
+                                if let image = finalImage {
+                                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                                    showSaveSuccess = true
+                                }
+                            }) {
+                                Text("Save Comparison")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .font(.headline)
+                            .padding()
+                            .background(Color.white.opacity(0.9))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+
+                            Button(action: {
+                                // Compose and share comparison image
+                                let original = selectedImage
+                                let size = CGSize(width: original.size.width + filteredImage.size.width,
+                                                  height: max(original.size.height, filteredImage.size.height))
+                                UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+                                original.draw(in: CGRect(origin: .zero, size: original.size))
+                                filteredImage.draw(in: CGRect(origin: CGPoint(x: original.size.width, y: 0),
+                                                             size: filteredImage.size))
+                                let finalImage = UIGraphicsGetImageFromCurrentImageContext()
+                                UIGraphicsEndImageContext()
+                                if let image = finalImage {
+                                    shareImage = image
+                                }
+                            }) {
+                                Text("Share Comparison")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .font(.headline)
+                            .padding()
+                            .background(Color.white.opacity(0.9))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
                         }
-                        .font(.headline)
-                        .padding()
-                        .background(Color.white.opacity(0.8))
-                        .cornerRadius(10)
-                        .foregroundColor(.blue)
                     } else {
                         PhotosPicker(
                             selection: $selectedPhotoItem,
@@ -285,12 +351,15 @@ struct ContentView: View {
                             .foregroundColor(.white)
                     }
                     Spacer()
-                    Button("Back") {
+                    Button(action: {
                         selectedImage = nil
                         filteredImage = nil
                         selectedPhotoItem = nil
                         showSaveSuccess = false
                         mode = .home
+                    }) {
+                        Text("Back")
+                            .frame(maxWidth: .infinity)
                     }
                     .padding()
                     .background(Color.white.opacity(0.7))
@@ -299,6 +368,16 @@ struct ContentView: View {
                     .padding(.bottom, 20)
                 }
                 .padding()
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let image = shareImage {
+                    ShareSheet(activityItems: [image])
+                }
+            }
+            .onChange(of: shareImage) { image in
+                if image != nil {
+                    showShareSheet = true
+                }
             }
             .onChange(of: selectedPhotoItem) { newItem in
                 guard let item = newItem else { return }
@@ -339,39 +418,45 @@ struct ContentView: View {
                         .foregroundColor(.white.opacity(0.8))
 
                     VStack(spacing: 16) {
-                        Button("Fetch the View!") {
+                        Button(action: {
                             mode = .camera
+                        }) {
+                            Text("Fetch the View!")
+                                .frame(maxWidth: .infinity)
                         }
                         .font(.headline)
                         .fontWeight(.bold)
                         .padding()
-                        .frame(maxWidth: .infinity)
                         .background(Color.white.opacity(0.3))
                         .foregroundColor(.white)
                         .cornerRadius(12)
                         .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         .padding(.horizontal, 40)
 
-                        Button("Take a Pawtrait") {
+                        Button(action: {
                             mode = .capture
+                        }) {
+                            Text("Take a Pawtrait")
+                                .frame(maxWidth: .infinity)
                         }
                         .font(.headline)
                         .fontWeight(.bold)
                         .padding()
-                        .frame(maxWidth: .infinity)
                         .background(Color.white.opacity(0.2))
                         .foregroundColor(.white)
                         .cornerRadius(12)
                         .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
                         .padding(.horizontal, 40)
 
-                        Button("Paw-ify a Photo") {
+                        Button(action: {
                             mode = .convert
+                        }) {
+                            Text("Paw-ify a Photo")
+                                .frame(maxWidth: .infinity)
                         }
                         .font(.headline)
                         .fontWeight(.bold)
                         .padding()
-                        .frame(maxWidth: .infinity)
                         .background(Color.white.opacity(0.2))
                         .foregroundColor(.white)
                         .cornerRadius(12)
