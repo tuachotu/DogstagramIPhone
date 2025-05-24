@@ -61,7 +61,8 @@ struct CameraView: UIViewRepresentable {
                 if self.captureRequested.wrappedValue {
                     self.captureRequested.wrappedValue = false
                     let filtered = UIImage(cgImage: cgImage)
-                    let original = UIImage(ciImage: ciImage)
+                    guard let cgOriginal = self.context.createCGImage(ciImage, from: ciImage.extent) else { return }
+                    let original = UIImage(cgImage: cgOriginal)
                     self.onCapture(original, filtered)
                 }
             }

@@ -26,6 +26,10 @@ struct ContentView: View {
     @State private var capturedOriginal: UIImage?
     @State private var showSaveOptions = false
 
+    // Share sheet state for comparison sharing
+    @State private var showShareSheet = false
+    @State private var shareImage: UIImage?
+
     var body: some View {
         switch mode {
         case .camera:
@@ -53,14 +57,30 @@ struct ContentView: View {
             ZStack {
                 if showSaveOptions, let original = capturedOriginal, let filtered = capturedFiltered {
                     Color.black.ignoresSafeArea()
-                    VStack {
-                        GeometryReader { geometry in
-                            Image(uiImage: filtered)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: geometry.size.width, height: geometry.size.height * 0.7)
-                                .clipped()
+                    VStack(spacing: 0) {
+                        Spacer()
+                        HStack(spacing: 10) {
+                            VStack {
+                                Text("Original")
+                                    .font(.caption)
+                                    .foregroundColor(.white)
+                                Image(uiImage: original)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .cornerRadius(10)
+                            }
+                            VStack {
+                                Text("Dog Vision")
+                                    .font(.caption)
+                                    .foregroundColor(.white)
+                                Image(uiImage: filtered)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .cornerRadius(10)
+                            }
                         }
+                        .padding(.horizontal)
+                        .frame(maxHeight: .infinity)
 
                         VStack(spacing: 20) {
                             Button("Save Dogified") {
@@ -78,17 +98,38 @@ struct ContentView: View {
                             Button("Save Comparison") {
                                 let size = CGSize(width: original.size.width + filtered.size.width,
                                                   height: max(original.size.height, filtered.size.height))
-                                UIGraphicsBeginImageContext(size)
+                                UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
                                 original.draw(in: CGRect(origin: .zero, size: original.size))
                                 filtered.draw(in: CGRect(origin: CGPoint(x: original.size.width, y: 0),
                                                          size: filtered.size))
-                                let combined = UIGraphicsGetImageFromCurrentImageContext()
+                                let finalImage = UIGraphicsGetImageFromCurrentImageContext()
                                 UIGraphicsEndImageContext()
-                                if let image = combined {
+                                if let image = finalImage {
                                     UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
                                 }
                                 showSaveOptions = false
                                 showCaptureSuccess = true
+                            }
+                            .font(.headline)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.white.opacity(0.9))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+
+                            // Share Comparison button
+                            Button("Share Comparison") {
+                                let size = CGSize(width: original.size.width + filtered.size.width,
+                                                  height: max(original.size.height, filtered.size.height))
+                                UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+                                original.draw(in: CGRect(origin: .zero, size: original.size))
+                                filtered.draw(in: CGRect(origin: CGPoint(x: original.size.width, y: 0),
+                                                         size: filtered.size))
+                                let finalImage = UIGraphicsGetImageFromCurrentImageContext()
+                                UIGraphicsEndImageContext()
+                                if let image = finalImage {
+                                    shareImage = image
+                                }
                             }
                             .font(.headline)
                             .padding()
@@ -165,6 +206,16 @@ struct ContentView: View {
                     }
                     .padding(.top, 30)
                     .padding(.trailing, 16)
+                }
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let image = shareImage {
+                    ShareSheet(activityItems: [image])
+                }
+            }
+            .onChange(of: shareImage) { image in
+                if image != nil {
+                    showShareSheet = true
                 }
             }
 
@@ -365,4 +416,16 @@ struct ContentView: View {
             return filteredUIImage
         }
     }
+}
+
+// ShareSheet struct for presenting UIActivityViewController
+struct ShareSheet: UIViewControllerRepresentable {
+    var activityItems: [Any]
+    var applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        return UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
