@@ -15,7 +15,7 @@ import CoreImage.CIFilterBuiltins
 /// AVFoundation’s capture session and Core Image filtering into SwiftUI.
 struct CameraView: UIViewRepresentable {
     @Binding var captureRequested: Bool
-    var onCapture: () -> Void
+    var onCapture: (_ original: UIImage, _ filtered: UIImage) -> Void
 
     func makeCoordinator() -> VideoDelegate {
         VideoDelegate(captureRequested: $captureRequested, onCapture: onCapture)
@@ -29,9 +29,9 @@ struct CameraView: UIViewRepresentable {
         let colorMatrix = CIFilter.colorMatrix()
 
         var captureRequested: Binding<Bool>
-        var onCapture: () -> Void
+        var onCapture: (_ original: UIImage, _ filtered: UIImage) -> Void
 
-        init(captureRequested: Binding<Bool>, onCapture: @escaping () -> Void) {
+        init(captureRequested: Binding<Bool>, onCapture: @escaping (_ original: UIImage, _ filtered: UIImage) -> Void) {
             self.captureRequested = captureRequested
             self.onCapture = onCapture
             super.init()
@@ -60,9 +60,9 @@ struct CameraView: UIViewRepresentable {
                 // Save filtered image if requested
                 if self.captureRequested.wrappedValue {
                     self.captureRequested.wrappedValue = false
-                    let uiImage = UIImage(cgImage: cgImage)
-                    UIImageWriteToSavedPhotosAlbum(uiImage, nil, nil, nil)
-                    self.onCapture()
+                    let filtered = UIImage(cgImage: cgImage)
+                    let original = UIImage(ciImage: ciImage)
+                    self.onCapture(original, filtered)
                 }
             }
         }

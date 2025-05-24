@@ -22,6 +22,10 @@ struct ContentView: View {
     @State private var filteredImage: UIImage?
     @State private var showSaveSuccess = false
 
+    @State private var capturedFiltered: UIImage?
+    @State private var capturedOriginal: UIImage?
+    @State private var showSaveOptions = false
+
     var body: some View {
         switch mode {
         case .camera:
@@ -29,7 +33,7 @@ struct ContentView: View {
                 Color.black
                     .ignoresSafeArea()
 
-                CameraView(captureRequested: .constant(false), onCapture: {} )
+                CameraView(captureRequested: .constant(false), onCapture: { _, _ in })
                     .ignoresSafeArea()
 
                 VStack {
@@ -47,57 +51,121 @@ struct ContentView: View {
 
         case .capture:
             ZStack {
-                Color.black.ignoresSafeArea()
-                CameraView(captureRequested: $captureRequested, onCapture: {
-                    showCaptureSuccess = true
-                })
-                .ignoresSafeArea()
-                VStack {
-                    Spacer()
-                    Button(action: { captureRequested = true }) {
-                        Text("Capture Pawtrait")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.white.opacity(0.8))
-                            .foregroundColor(.blue)
-                            .cornerRadius(16)
-                            .padding(.horizontal, 40)
-                    }
-                    .padding(.bottom, 50)
-                }
-                if showCaptureSuccess {
+                if showSaveOptions, let original = capturedOriginal, let filtered = capturedFiltered {
+                    Color.black.ignoresSafeArea()
                     VStack {
-                        Spacer()
-                        Text("Saved to Photos! 🐾")
+                        GeometryReader { geometry in
+                            Image(uiImage: filtered)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: geometry.size.width, height: geometry.size.height * 0.7)
+                                .clipped()
+                        }
+
+                        VStack(spacing: 20) {
+                            Button("Save Dogified") {
+                                UIImageWriteToSavedPhotosAlbum(filtered, nil, nil, nil)
+                                showSaveOptions = false
+                                showCaptureSuccess = true
+                            }
                             .font(.headline)
                             .padding()
-                            .background(Color.green.opacity(0.85))
-                            .cornerRadius(12)
-                            .foregroundColor(.white)
-                            .padding(.bottom, 120)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.white.opacity(0.9))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+
+                            Button("Save Comparison") {
+                                let size = CGSize(width: original.size.width + filtered.size.width,
+                                                  height: max(original.size.height, filtered.size.height))
+                                UIGraphicsBeginImageContext(size)
+                                original.draw(in: CGRect(origin: .zero, size: original.size))
+                                filtered.draw(in: CGRect(origin: CGPoint(x: original.size.width, y: 0),
+                                                         size: filtered.size))
+                                let combined = UIGraphicsGetImageFromCurrentImageContext()
+                                UIGraphicsEndImageContext()
+                                if let image = combined {
+                                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                                }
+                                showSaveOptions = false
+                                showCaptureSuccess = true
+                            }
+                            .font(.headline)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.white.opacity(0.9))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+
+                            Button("Home") {
+                                mode = .home
+                                showSaveOptions = false
+                            }
+                            .font(.headline)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.white.opacity(0.9))
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+                        }
+                        .padding(.bottom, 30)
                     }
-                    .transition(.opacity)
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            showCaptureSuccess = false
+                    .padding()
+                } else {
+                    Color.black.ignoresSafeArea()
+                    CameraView(captureRequested: $captureRequested, onCapture: { original, filtered in
+                        capturedOriginal = original
+                        capturedFiltered = filtered
+                        showSaveOptions = true
+                    })
+                    .ignoresSafeArea()
+                    VStack {
+                        Spacer()
+                        Button(action: { captureRequested = true }) {
+                            Text("Capture Pawtrait")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.white.opacity(0.8))
+                                .foregroundColor(.blue)
+                                .cornerRadius(16)
+                                .padding(.horizontal, 40)
+                        }
+                        .padding(.bottom, 50)
+                    }
+                    if showCaptureSuccess {
+                        VStack {
+                            Spacer()
+                            Text("Saved to Photos! 🐾")
+                                .font(.headline)
+                                .padding()
+                                .background(Color.green.opacity(0.85))
+                                .cornerRadius(12)
+                                .foregroundColor(.white)
+                                .padding(.bottom, 120)
+                        }
+                        .transition(.opacity)
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                showCaptureSuccess = false
+                            }
                         }
                     }
-                }
-                VStack {
-                    HStack {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Button("Back") { mode = .home }
+                                .padding()
+                                .background(Color.white.opacity(0.7))
+                                .cornerRadius(8)
+                                .foregroundColor(.blue)
+                        }
                         Spacer()
-                        Button("Back") { mode = .home }
-                            .padding()
-                            .background(Color.white.opacity(0.7))
-                            .cornerRadius(8)
-                            .foregroundColor(.blue)
                     }
-                    Spacer()
+                    .padding(.top, 30)
+                    .padding(.trailing, 16)
                 }
-                .padding(.top, 30)
-                .padding(.trailing, 16)
             }
 
         case .convert:
