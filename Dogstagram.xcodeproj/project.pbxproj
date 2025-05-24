@@ -414,7 +414,11 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Dogstagram/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to show a live dog-vision filter";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app saves dog-vision photos to your gallery";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app allows you to pick photos to paw-ify.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -444,7 +448,11 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Dogstagram/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to show a live dog-vision filter";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app saves dog-vision photos to your gallery";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app allows you to pick photos to paw-ify.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

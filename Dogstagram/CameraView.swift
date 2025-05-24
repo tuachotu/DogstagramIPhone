@@ -14,8 +14,11 @@ import CoreImage.CIFilterBuiltins
 /// a live, filtered camera feed. It uses `UIViewRepresentable` to bridge
 /// AVFoundation’s capture session and Core Image filtering into SwiftUI.
 struct CameraView: UIViewRepresentable {
+    @Binding var captureRequested: Bool
+    var onCapture: () -> Void
+
     func makeCoordinator() -> VideoDelegate {
-        VideoDelegate()
+        VideoDelegate(captureRequested: $captureRequested, onCapture: onCapture)
     }
 
     /// `VideoDelegate` owns the camera session, applies a dog-vision color filter
@@ -24,15 +27,20 @@ struct CameraView: UIViewRepresentable {
         var session: AVCaptureSession?
         let context = CIContext()
         let colorMatrix = CIFilter.colorMatrix()
-        
-        override init() {
+
+        var captureRequested: Binding<Bool>
+        var onCapture: () -> Void
+
+        init(captureRequested: Binding<Bool>, onCapture: @escaping () -> Void) {
+            self.captureRequested = captureRequested
+            self.onCapture = onCapture
             super.init()
             // Dog-vision matrix: mute red/green, preserve blue/yellow
             colorMatrix.rVector = CIVector(x: 0.625, y: 0,    z: 0, w: 0)
             colorMatrix.gVector = CIVector(x: 0.375, y: 0.3,  z: 0.3, w: 0)
             colorMatrix.bVector = CIVector(x: 0,     y: 0,    z: 0.7, w: 0)
         }
-        
+
         func captureOutput(_ output: AVCaptureOutput,
                            didOutput sampleBuffer: CMSampleBuffer,
                            from connection: AVCaptureConnection) {
@@ -41,24 +49,31 @@ struct CameraView: UIViewRepresentable {
             //process—otherwise continue with pixelBuffer safely unwrapped.
             guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
             let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-            
+
             colorMatrix.inputImage = ciImage
             guard let filteredCI = colorMatrix.outputImage,
                   let cgImage = context.createCGImage(filteredCI, from: filteredCI.extent)
             else { return }
-            
+
             DispatchQueue.main.async {
                 self.previewLayer.contents = cgImage
+                // Save filtered image if requested
+                if self.captureRequested.wrappedValue {
+                    self.captureRequested.wrappedValue = false
+                    let uiImage = UIImage(cgImage: cgImage)
+                    UIImageWriteToSavedPhotosAlbum(uiImage, nil, nil, nil)
+                    self.onCapture()
+                }
             }
         }
-        
+
         lazy var previewLayer: CALayer = {
             let layer = CALayer()
             layer.contentsGravity = .resizeAspectFill
             return layer
         }()
     }
-    
+
     /// Creates and configures the underlying UIView exactly once.
     /// - Sets up the AVCaptureSession with the back camera as input.
     /// - Hooks VideoDataOutput to our VideoDelegate for frame-by-frame filtering.
@@ -66,11 +81,11 @@ struct CameraView: UIViewRepresentable {
     /// - Observes device rotation to keep the preview filling the view.
     func makeUIView(context: Context) -> UIView {
         let view = UIView()
-        
+
         let session = AVCaptureSession()
         context.coordinator.session = session
         session.sessionPreset = .high
-        
+
         // Camera input
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera,
                                                    for: .video,
@@ -78,19 +93,19 @@ struct CameraView: UIViewRepresentable {
               let input = try? AVCaptureDeviceInput(device: camera)
         else { return view }
         session.addInput(input)
-        
+
         // Video output
         let output = AVCaptureVideoDataOutput()
         output.setSampleBufferDelegate(context.coordinator, queue: .global())
         session.addOutput(output)
-        
+
         // Force video orientation to portrait
         if let connection = output.connection(with: .video), connection.isVideoOrientationSupported {
             connection.videoOrientation = .portrait
         }
-        
+
         // Preview layer from delegate
-        
+
         view.layer.addSublayer(context.coordinator.previewLayer)
         context.coordinator.previewLayer.frame = view.bounds
         DispatchQueue.main.async {
@@ -104,7 +119,7 @@ struct CameraView: UIViewRepresentable {
         DispatchQueue.global(qos: .userInitiated).async {
             session.startRunning()
         }
-        
+
         // Handle rotation/resizing
         NotificationCenter.default.addObserver(forName: UIDevice.orientationDidChangeNotification,
                                                object: nil, queue: .main) { _ in
@@ -114,12 +129,16 @@ struct CameraView: UIViewRepresentable {
            preview.setAffineTransform(.identity)
 //            preview.position = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
         }
-        
+        context.coordinator.captureRequested = $captureRequested
+        context.coordinator.onCapture = onCapture
+
         return view
     }
     /// Called whenever SwiftUI updates layout or size.
     /// Simply resizes the preview layer to match the UIView’s new bounds.
     func updateUIView(_ uiView: UIView, context: Context) {
         context.coordinator.previewLayer.frame = uiView.bounds
+        context.coordinator.captureRequested = $captureRequested
+        context.coordinator.onCapture = onCapture
     }
 }
